@@ -53,6 +53,36 @@ app.delete("/api/persons/:id", (request, response) => {
 })
 
 
+app.post("/api/persons", (request, response) => {
+    const name = request.body.name; 
+    if(notes.find(n => n.name === name))
+        return response.status(400).json({
+            error: 'name must be unique'
+        })
+    
+    const number = request.body.number; 
+    if(!number){
+        return response.status(400).json({
+            error: 'note must have number'
+        })
+    }
+
+    if(!name){
+        return response.status(400).json({
+            error: 'note must have name'
+        })
+    }
+
+    const newNote = {
+        name: name, 
+        number: number, 
+        id: Math.floor(23666 * Math.random())
+    }
+
+    notes = notes.concat(newNote); 
+    return response.json(newNote); 
+})
+
 
 
 const PORT = 3001; 
