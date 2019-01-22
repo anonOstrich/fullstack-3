@@ -4,7 +4,7 @@ const app = express();
 app.use(bodyParser.json());
 
 
-const notes = [
+let notes = [
     {
     id: 1, 
     name: "Arto Hellas", 
@@ -29,12 +29,12 @@ const notes = [
 ]
 
 app.get("/api/persons", (request, response) => {
-    response.json(notes); 
+    response.json(notes);  
 })
 
 app.get("/api/persons/:id", (request, response) => {
     const id = Number(request.params.id); 
-    const note = notes.find(p => p.id == id); 
+    const note = notes.find(p => p.id === id); 
     if(!note){
         return response.status(404).end(); 
     }
@@ -44,6 +44,12 @@ app.get("/api/persons/:id", (request, response) => {
 app.get("/info", (request, response) => {
     response.send(`<p>Puhelinluettelossa ${notes.length} henkilön tiedot</p>` + 
     `<p>${new Date()}</p>`); 
+})
+
+app.delete("/api/persons/:id", (request, response) => {
+    const id = Number(request.params.id);  
+    notes = notes.filter( n => n.id !== id); 
+    response.status(204).end(); 
 })
 
 
