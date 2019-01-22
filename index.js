@@ -32,6 +32,15 @@ app.get("/api/persons", (request, response) => {
     response.json(notes); 
 })
 
+app.get("/api/persons/:id", (request, response) => {
+    const id = Number(request.params.id); 
+    const note = notes.find(p => p.id == id); 
+    if(!note){
+        return response.status(404).end(); 
+    }
+    return response.json(note); 
+})
+
 app.get("/info", (request, response) => {
     response.send(`<p>Puhelinluettelossa ${notes.length} henkilön tiedot</p>` + 
     `<p>${new Date()}</p>`); 
