@@ -1,14 +1,17 @@
 const express = require('express'); 
 const bodyParser = require('body-parser'); 
-const morgan = require('morgan'); 
 const app = express(); 
 app.use(bodyParser.json());
 
 
-morgan.token('body', (req) => (JSON.stringify(req.body)))
+if(process.env.NODE_ENV === 'development'){
+    const morgan = require('morgan'); 
+    morgan.token('body', (req) => (JSON.stringify(req.body)))
+    app.use(morgan(':method :url :status :res[content-length] - :response-time'
++ ' ms :body'));
+}
 
-app.use(morgan(':method :url :status :res[content-length] - :response-time'
-+ ' ms :body')); 
+ 
 const cors = require('cors'); 
 app.use(cors())
 app.use(express.static('build'))
