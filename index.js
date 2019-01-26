@@ -1,6 +1,8 @@
+require('dotenv').config(); 
 const express = require('express'); 
 const bodyParser = require('body-parser'); 
 const app = express(); 
+const Person = require('./models/person')
 app.use(bodyParser.json());
 
 
@@ -42,7 +44,10 @@ let notes = [
 ]
 
 app.get("/api/persons", (request, response) => {
-    response.json(notes);  
+    Person.find({})
+    .then(people => {
+        response.json(people.map(p => p.toJSON()));
+    })  
 })
 
 app.get("/api/persons/:id", (request, response) => {
@@ -68,11 +73,7 @@ app.delete("/api/persons/:id", (request, response) => {
 
 app.post("/api/persons", (request, response) => {
     const name = request.body.name; 
-    if(notes.find(n => n.name === name))
-        return response.status(400).json({
-            error: 'name must be unique'
-        })
-    
+   
     const number = request.body.number; 
     if(!number){
         return response.status(400).json({
@@ -86,14 +87,15 @@ app.post("/api/persons", (request, response) => {
         })
     }
 
-    const newNote = {
+    const newPerson = new Person({
         name: name, 
         number: number, 
-        id: Math.floor(23666 * Math.random())
-    }
+    })
 
-    notes = notes.concat(newNote); 
-    return response.json(newNote); 
+    newPerson.save()
+    .then(response => {
+        response.json(response.toJSON()); 
+        })
 })
 
 
