@@ -19,59 +19,60 @@ app.use(cors())
 app.use(express.static('build'))
 
 
-let notes = [
-    {
-    id: 1, 
-    name: "Arto Hellas", 
-    number: "045-1236543"
-    }, 
 
-    {
-        id: 2, 
-        name: "Arto Järvinen", 
-        number: "041-21423123"
-    }, 
-    {
-        id: 3, 
-        name: "Lea Kutvonen", 
-        number: "040-4323234"
-    }, 
-    {
-        id: 4, 
-        name: "Martti Tienari", 
-        number: "09-784232"
-    }
-]
-
-app.get("/api/persons", (request, response) => {
+app.get("/api/persons", (request, response, next) => {
     Person.find({})
     .then(people => {
         response.json(people.map(p => p.toJSON()));
     })  
+    .catch(error => next(error));
 })
 
-app.get("/api/persons/:id", (request, response) => {
-    const id = Number(request.params.id); 
-    const note = notes.find(p => p.id === id); 
-    if(!note){
-        return response.status(404).end(); 
+app.get("/api/persons/:id", (request, response, next) => {
+    Person.findById(request.params.id)
+    .then(person => {
+        if(person){
+            return response.json(person)
+        } else {
+            return response.status(404).end();
+        }
+    })
+    .catch(error => next(error)); 
+})
+
+app.get("/info", (request, response, next) => {
+    Person.countDocuments({})
+    .then(count => 
+        {
+            response.send(`<p>Puhelinluettelossa ${count} henkilön tiedot</p>` + 
+            `<p>${new Date()}</p>`);
+        })
+    .catch(error => next(error))
+
+})
+
+app.delete("/api/persons/:id", (request, response, next) => {
+    Person.findByIdAndRemove(request.params.id)
+    .then(deleted =>{
+        response.status(204).end(); 
+    })
+    .catch(error => next(error))
+})
+
+app.put("/api/persons/:id", (request, response, next) => {
+    const body = request.body; 
+    const newPerson = {
+        name: body.name, 
+        number: body.number,
     }
-    return response.json(note); 
-})
+    Person.findByIdAndUpdate(request.params.id, newPerson, { new: true})
+    .then(updatedPerson => response.json(updatedPerson.toJSON()))
+    .catch(error => next(error))
 
-app.get("/info", (request, response) => {
-    response.send(`<p>Puhelinluettelossa ${notes.length} henkilön tiedot</p>` + 
-    `<p>${new Date()}</p>`); 
-})
-
-app.delete("/api/persons/:id", (request, response) => {
-    const id = Number(request.params.id);  
-    notes = notes.filter( n => n.id !== id); 
-    response.status(204).end(); 
 })
 
 
-app.post("/api/persons", (request, response) => {
+app.post("/api/persons", (request, response, next) => {
     const name = request.body.name; 
    
     const number = request.body.number; 
@@ -93,10 +94,22 @@ app.post("/api/persons", (request, response) => {
     })
 
     newPerson.save()
-    .then(response => {
-        response.json(response.toJSON()); 
+    .then(added => {
+        response.json(added.toJSON()); 
         })
+    .catch(error => next(error))
 })
+
+const ownErrorHandler = (error, request, response, next) => {
+    console.error(error.message); 
+    if (error.name === 'CastError' && error.kind === 'ObjectId') {
+        return response.status(400).send({ error: 'malformatted id' })
+      } 
+    next(error); 
+
+}
+
+app.use(ownErrorHandler); 
 
 
 
